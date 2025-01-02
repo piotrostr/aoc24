@@ -11,72 +11,58 @@ MAMMMXMMMM
 MXMXAXMASX
 """
 
-print("total Xs:", sample.count("X"))
 
+def count_xmas(grid):
+    rows = len(grid)
+    cols = len(grid[0])
+    count = 0
 
-# switch case would be faster
-def get_next_char(char: str) -> str:
-    xmas = "XMAS"
-    return xmas[(xmas.find(char) + 1) % len(xmas)]
+    # All possible directions: right, down, diagonal-right-down, diagonal-left-down
+    # and their reverses for "SAMX"
+    directions = [
+        (0, 1),  # right
+        (1, 0),  # down
+        (1, 1),  # diagonal right-down
+        (1, -1),  # diagonal left-down
+    ]
 
+    def check_word(x, y, dx, dy):
+        # Check both "XMAS" and "SAMX"
+        words = ["XMAS", "SAMX"]
 
-def sample_to_matrix(sample: str) -> list[list[str]]:
-    rows = [row for row in sample.splitlines() if row]
-    m = [["" for _ in range(len(rows))] for _ in range(len(rows))]
-    for y in range(len(rows)):
-        for x in range(len(rows[y])):
-            m[y][x] = rows[y][x]
-
-    return m
-
-
-def check_bounds(m: list[list[str]], point: tuple[int, int]) -> bool:
-    if 0 <= point[0] < len(m) and 0 <= point[1] < len(m[0]):
-        return True
-    return False
-
-
-def get_neighbors(m: list[list[str]], point: tuple[int, int]) -> list[tuple[int, int]]:
-    neighbors = []
-    directions = [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-    for dy, dx in directions:
-        neighbor = (point[0] + dy, point[1] + dx)
-        if check_bounds(m, neighbor):
-            neighbors.append(neighbor)
-
-    return neighbors
-
-
-def find_xmases(m: list[list[str]]) -> tuple[list[list[str]], int]:
-    xs = []
-    for y in range(len(m)):
-        for x in range(len(m[y])):
-            if m[y][x] == "X":
-                xs.append((y, x))
-
-    xmases_count = 0
-    for yx, xx in xs:
-        stack = [(yx, xx, [(yx, xx)])]
-        while len(stack) > 0:
-            y, x, path = stack.pop()
-            if len(path) == 4:
-                if [m[y][x] for y, x in path] == ["X", "M", "A", "S"]:
-                    xmases_count += 1
+        for word in words:
+            if not (
+                0 <= x + (len(word) - 1) * dx < rows
+                and 0 <= y + (len(word) - 1) * dy < cols
+            ):
                 continue
-            current_char = m[y][x]
-            next_char = get_next_char(current_char)
 
-            neighbors = get_neighbors(m, (y, x))
-            for ny, nx in neighbors:
-                if m[ny][nx] == next_char and (ny, nx) not in path:
-                    new_path = path + [(ny, nx)]
-                    stack.append((ny, nx, new_path))
+            found = True
+            for i in range(len(word)):
+                if grid[x + i * dx][y + i * dy] != word[i]:
+                    found = False
+                    break
+            if found:
+                return 1
+        return 0
 
-    return ([], xmases_count)
+    # Check each starting position
+    for i in range(rows):
+        for j in range(cols):
+            # Try each direction
+            for dx, dy in directions:
+                count += check_word(i, j, dx, dy)
+
+    return count
 
 
-if __name__ == "__main__":
-    m = sample_to_matrix(sample)
-    print(find_xmases(m))
-    # with open("input.txt") as f:
-    #     contents = f.read()
+# Read input
+grid = []
+with open("input.txt", "r") as f:
+    for line in f:
+        grid.append(line.strip())
+
+# Get result
+result = count_xmas(grid)
+# sample.strip().split("\n"))
+print(f"XMAS appears {result} times")
